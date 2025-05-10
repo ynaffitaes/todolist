@@ -1,104 +1,124 @@
+// Écouteur d'événement qui se déclenche quand le DOM est complètement chargé
 document.addEventListener('DOMContentLoaded', function() {
-    // Éléments DOM
-    const taskForm = document.getElementById('task-form');
-    const taskInput = document.getElementById('task-input');
-    const taskList = document.getElementById('task-list');
-    const emptyList = document.getElementById('empty-list');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const clearBtn = document.getElementById('clear-btn');
+    // Récupération des éléments du DOM par leur ID
+    const taskForm = document.getElementById('task-form'); // Formulaire d'ajout de tâche
+    const taskInput = document.getElementById('task-input'); // Champ de saisie de la tâche
+    const taskList = document.getElementById('task-list'); // Liste ul qui contiendra les tâches
+    const emptyList = document.getElementById('empty-list'); // Message quand la liste est vide
+    const filterBtns = document.querySelectorAll('.filter-btn'); // Boutons de filtrage
+    const clearBtn = document.getElementById('clear-btn'); // Bouton de réinitialisation
     
     // Variables
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    let currentFilter = 'all';
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || []; // Récupère les tâches du localStorage ou initialise un tableau vide
+    let currentFilter = 'all'; // Filtre actif par défaut
     
-    // Initialisation
-    renderTasks();
-    updateEmptyState();
+    // Initialisation de l'application
+    renderTasks(); // Affiche les tâches
+    updateEmptyState(); // Met à jour l'état de la liste vide
     
-    // Événements
-    taskForm.addEventListener('submit', addTask);
-    taskList.addEventListener('click', handleTaskActions);
-    clearBtn.addEventListener('click', clearLocalStorage);
+    // Gestion des événements
+    taskForm.addEventListener('submit', addTask); // Soumission du formulaire
+    taskList.addEventListener('click', handleTaskActions); // Clic sur une tâche
+    clearBtn.addEventListener('click', clearLocalStorage); // Clic sur le bouton de réinitialisation
     
+    // Gestion des boutons de filtre
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+            // Met à jour le style des boutons de filtre
             filterBtns.forEach(b => {
-                if (b === btn) {
+                if (b === btn) { // Si le bouton est actif 
+                    // Style pour le bouton actif
                     b.classList.add('bg-[var(--color-primary)]', 'text-black', 'border-[var(--color-primary)]');
                     b.classList.remove('bg-transparent', 'text-[var(--color-title)]', 'border-[var(--color-title)]');
-                } else {
+                } else { // Sinon
+                    // Style pour les boutons inactifs
                     b.classList.remove('bg-[var(--color-primary)]', 'text-black');
                     b.classList.add('bg-transparent', 'text-[var(--color-title)]', 'border-[var(--color-title)]');
                 }
             });
             
-            currentFilter = btn.dataset.filter;
+            // Met à jour le filtre courant et rafraîchit l'affichage
+            currentFilter = btn.dataset.filter; // Récupère le filtre depuis l'attribut data-filter dans le html
+            // Met à jour le filtre actif
             renderTasks();
         });
     });
     
-    // Fonctions
+    // Fonction pour ajouter une nouvelle tâche
     function addTask(e) {
-        e.preventDefault();
+        e.preventDefault(); // Empêche le rechargement de la page
         
-        const taskText = taskInput.value.trim();
+        const taskText = taskInput.value.trim(); // Dans la variable taskText, Récupère et nettoie le texte 
         
-        if (taskText) {
+        if (taskText) { // Si le texte n'est pas vide
+            // Crée un nouvel objet tâche
             const newTask = {
-                id: Date.now(),
-                text: taskText,
-                completed: false,
-                createdAt: new Date().toISOString()
+                id: Date.now(), // ID unique basé sur le timestamp
+                text: taskText, // Texte de la tâche
+                completed: false, // État non complété par défaut
+                createdAt: new Date().toISOString() // Date de création
             };
             
-            tasks.push(newTask);
-            saveTasks();
-            renderTasks();
-            taskInput.value = '';
-            updateEmptyState();
+            tasks.push(newTask); // Ajoute la nouvelle tâche au tableau
+            saveTasks(); // Sauvegarde dans le localStorage
+            renderTasks(); // Rafraîchit l'affichage
+            taskInput.value = ''; // Vide le champ de saisie
+            updateEmptyState(); // Met à jour l'état de la liste vide
         }
     }
     
+    // Fonction pour gérer les actions sur les tâches
     function handleTaskActions(e) {
-        const target = e.target;
-        const taskItem = target.closest('li');
-        if (!taskItem) return;
+        const target = e.target; // dans la variable target récupère l'Élément cliqué
+        const taskItem = target.closest('li'); // dans la variable taskItem récupère la Tâche parente
+        if (!taskItem) return; // Si on n'a pas cliqué sur une tâche, on sort
         
-        const taskId = parseInt(taskItem.dataset.id);
+        const taskId = parseInt(taskItem.dataset.id); // dans la variable taskId récupère ID de la tâche
         
-        if (target.classList.contains('delete-btn') || target.closest('.delete-btn')) {
+        // Gestion du clic sur le bouton de suppression
+        if (target.classList.contains('delete-btn') || target.closest('.delete-btn')) { // Si on a cliqué sur le bouton de suppression ou sur un de ses parents
+            //supprime la tâche	
             deleteTask(taskId);
-        } else if (target.classList.contains('complete-btn') || target.closest('.complete-btn')) {
+        } 
+        // Gestion du clic sur le bouton de complétion
+        else if (target.classList.contains('complete-btn') || target.closest('.complete-btn')) { // Sinon si on a cliqué sur le bouton de complétion ou sur un de ses parents
+            // complete la tâche
             toggleComplete(taskId);
-        } else if (target.classList.contains('edit-btn') || target.closest('.edit-btn')) {
-            const task = tasks.find(t => t.id === taskId);
-            showEditForm(taskId, task.text);
+        } 
+        // Gestion du clic sur le bouton d'édition
+        else if (target.classList.contains('edit-btn') || target.closest('.edit-btn')) { // Sinon si on a cliqué sur le bouton d'édition ou sur un de ses parents
+            const task = tasks.find(t => t.id === taskId); // Trouve la tâche correspondante
+            showEditForm(taskId, task.text); // et affiche le formulaire d'édition
         }
     }
     
-    function deleteTask(id) {
-        tasks = tasks.filter(task => task.id !== id);
-        saveTasks();
-        renderTasks();
-        updateEmptyState();
+    // Fonction pour supprimer une tâche
+    function deleteTask(id) { 
+        tasks = tasks.filter(task => task.id !== id); // dans la variable tasks filtre les tâches pour supprimer celle avec l'ID donné
+        saveTasks(); // Sauvegarde
+        renderTasks(); // Rafraîchit l'affichage
+        updateEmptyState(); // Met à jour l'état de la liste vide
     }
     
+    // Fonction pour basculer l'état de complétion d'une tâche
     function toggleComplete(id) {
-        tasks = tasks.map(task => {
-            if (task.id === id) {
-                return { ...task, completed: !task.completed };
+        tasks = tasks.map(task => { // dans la variable tasks, on parcourt toutes les tâches
+            if (task.id === id) { // Si la tâche a l'ID donné
+                return { ...task, completed: !task.completed }; // Inverse l'état de complétion
             }
-            return task;
+            return task; // Retourne la tâche inchangée
         });
         
-        saveTasks();
-        renderTasks();
+        saveTasks(); // Sauvegarde la liste mise à jour
+        renderTasks(); // Rafraîchit l'affichage
     }
     
+    // Fonction pour afficher le formulaire d'édition
     function showEditForm(id, currentText) {
-        const taskItem = document.querySelector(`li[data-id="${id}"]`);
-        if (!taskItem) return;
+        const taskItem = document.querySelector(`li[data-id="${id}"]`); // dans la variable taskItem Trouve l'élément "li" de la tâche
+        if (!taskItem) return; // Si elle n'est pas trouvée, on sort
         
+        // Remplace le contenu de la tâche par un formulaire d'édition
         taskItem.innerHTML = `
             <form class="task-edit-form flex w-full gap-2">
                 <input type="text" 
@@ -116,147 +136,165 @@ document.addEventListener('DOMContentLoaded', function() {
             </form>
         `;
         
-        const editForm = taskItem.querySelector('.task-edit-form');
-        const editInput = taskItem.querySelector('.edit-input');
-        const cancelBtn = taskItem.querySelector('.cancel-btn');
+        // Récupération des éléments du formulaire
+        const editForm = taskItem.querySelector('.task-edit-form'); // dans la variable editForm récupère le formulaire
+        const editInput = taskItem.querySelector('.edit-input'); // dans la variable editInput récupère le champ de saisie
+        const cancelBtn = taskItem.querySelector('.cancel-btn'); // dans la variable cancelBtn récupère le bouton d'annulation
         
-        editForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            updateTask(id, editInput.value.trim());
+        // Gestion de la soumission du formulaire
+        editForm.addEventListener('submit', (e) => { // Quand le formulaire est soumis
+            e.preventDefault(); // Empêche le rechargement de la page
+            updateTask(id, editInput.value.trim()); // Met à jour la tâche
         });
         
-        cancelBtn.addEventListener('click', () => renderTasks());
+        // Gestion de l'annulation
+        cancelBtn.addEventListener('click', () => renderTasks()); // Quand on clique sur annuler, on rafraîchit l'affichage
         
-        editInput.focus();
+        editInput.focus(); // Met le focus sur le champ d'édition
     }
     
+    // Fonction pour mettre à jour une tâche
     function updateTask(id, newText) {
-        if (!newText) {
-            renderTasks();
-            return;
+        if (!newText) { // Si le texte est vide
+            renderTasks(); // Si texte vide, on rafraîchit sans sauvegarder
+            return; // On sort
         }
         
-        tasks = tasks.map(task => 
-            task.id === id ? { ...task, text: newText } : task
+        // Met à jour le texte de la tâche correspondante
+        tasks = tasks.map(task => // Parcourt toutes les tâches
+            task.id === id ? { ...task, text: newText } : task // Si la tâche a l'ID donné, on met à jour le texte
         );
-        saveTasks();
-        renderTasks();
+        saveTasks(); // Sauvegarde
+        renderTasks(); // Rafraîchit l'affichage
     }
     
+    // Fonction pour afficher les tâches
     function renderTasks() {
-        taskList.innerHTML = '';
+        taskList.innerHTML = ''; // Vide la liste
         
+        // Filtre les tâches selon le filtre actif
         const filteredTasks = tasks.filter(task => {
-            if (currentFilter === 'active') return !task.completed;
-            if (currentFilter === 'completed') return task.completed;
-            return true;
+            if (currentFilter === 'active') return !task.completed; // si le filtre est 'active', retourne les tâches non complétées
+            if (currentFilter === 'completed') return task.completed; // si le filtre est 'completed', retourne les tâches complétées
+            return true; // sinon retourne toutes les tâches
         });
         
         if (filteredTasks.length === 0) {
-            updateEmptyState();
-            return;
+            updateEmptyState(); // Affiche le message si liste vide
+            return; // S'il n'y a aucune tâche, on sort
         }
         
-        emptyList.style.display = 'none';
+        emptyList.style.display = 'none'; // Cache le message de liste vide
         
+        // Crée et ajoute chaque tâche à la liste
         filteredTasks.forEach(task => {
-            const taskEl = document.createElement('li');
-            taskEl.dataset.id = task.id;
-            taskEl.className = 'flex items-center justify-between px-4 py-3 border-b border-[var(--color-card)]';
+            const taskEl = document.createElement('li'); // dans la variable taskEl crée un nouvel élément "li"
+            taskEl.dataset.id = task.id; // Ajoute l'ID de la tâche
+            taskEl.className = 'flex items-center justify-between px-4 py-3 border-b border-[var(--color-card)]'; // Ajoute des classes pour le style
             
-            const taskContent = document.createElement('div');
-            taskContent.className = 'flex items-center gap-3';
+            const taskContent = document.createElement('div'); // dans la variable taskContent crée un nouvel élément "div"
+            taskContent.className = 'flex items-center gap-3'; // Ajoute des classes pour le style
             
             // Bouton de complétion
-            const completeBtn = document.createElement('button');
+            const completeBtn = document.createElement('button'); // dans la variable completeBtn crée un nouvel élément "button"
+            // Ajoute des classes pour le style
             completeBtn.className = 'complete-btn flex items-center justify-center w-5 h-5 rounded-full border-2 border-[var(--color-secondary)] cursor-pointer transition-colors duration-300';
+            // Change le style selon l'état de complétion
             completeBtn.style.backgroundColor = task.completed ? 'var(--color-completed)' : 'transparent';
+            // Change la couleur de la bordure selon l'état de complétion
             completeBtn.innerHTML = task.completed ? '<i class="fas fa-check text-white text-xs"></i>' : '';
             
             // Texte de la tâche
-            const taskText = document.createElement('span');
-            taskText.className = task.completed ? 'line-through text-[var(--color-lightText)]' : '';
-            taskText.textContent = task.text;
+            const taskText = document.createElement('span'); // dans la variable taskText crée un nouvel élément "span"
+            taskText.className = task.completed ? 'line-through text-[var(--color-lightText)]' : ''; // Ajoute une classe pour barrer le texte si complété
+            taskText.textContent = task.text; // Définit le texte de la tâche
             
             // Boutons d'action
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'flex gap-3';
+            const actionsDiv = document.createElement('div'); // dans la variable actionsDiv crée un nouvel élément "div"
+            actionsDiv.className = 'flex gap-3'; // Ajoute des classes pour le style
             
             // Bouton Éditer
-            const editBtn = document.createElement('button');
-            editBtn.className = 'edit-btn text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors duration-300';
-            editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+            const editBtn = document.createElement('button'); // dans la variable editBtn crée un nouvel élément "button"
+            editBtn.className = 'edit-btn text-[var(--color-primary)] hover:text-[var(--color-secondary)] transition-colors duration-300'; // Ajoute des classes pour le style
+            editBtn.innerHTML = '<i class="fas fa-pen"></i>'; // Définit l'icône d'édition
             
             // Bouton Supprimer
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn text-[var(--color-delete)] hover:text-[var(--color-secondary)] transition-colors duration-300';
             deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
             
-            actionsDiv.appendChild(editBtn);
-            actionsDiv.appendChild(deleteBtn);
+            // Construction de la structure DOM
+            actionsDiv.appendChild(editBtn); // Ajoute le bouton Éditer
+            actionsDiv.appendChild(deleteBtn); // Ajoute le bouton Supprimer
             
-            taskContent.appendChild(completeBtn);
-            taskContent.appendChild(taskText);
-            taskEl.appendChild(taskContent);
-            taskEl.appendChild(actionsDiv);
-            taskList.appendChild(taskEl);
+            taskContent.appendChild(completeBtn); // Ajoute le bouton de complétion
+            taskContent.appendChild(taskText); // Ajoute le texte de la tâche
+            taskEl.appendChild(taskContent); // Ajoute le contenu de la tâche
+            taskEl.appendChild(actionsDiv); // Ajoute les actions
+            taskList.appendChild(taskEl); // Ajoute la tâche à la liste
         });
     }
     
+    // Fonction pour mettre à jour l'affichage quand la liste est vide
     function updateEmptyState() {
-        const filteredTasks = tasks.filter(task => {
-            if (currentFilter === 'active') return !task.completed;
-            if (currentFilter === 'completed') return task.completed;
-            return true;
+        // Filtre les tâches selon le filtre actif
+        const filteredTasks = tasks.filter(task => { // Dans la variable "filteredTasks", Parcourt toutes les tâches
+            if (currentFilter === 'active') return !task.completed; // si le filtre est 'active', retourne les tâches non complétées
+            if (currentFilter === 'completed') return task.completed; // si le filtre est 'completed', retourne les tâches complétées
+            return true; // sinon retourne toutes les tâches
         });
         
-        if (filteredTasks.length === 0) {
-            emptyList.style.display = 'block';
-            if (tasks.length > 0) {
-                emptyList.textContent = "Aucune tâche ne correspond à ce filtre.";
-            } else {
-                emptyList.textContent = "Votre liste est vide. Ajoutez une tâche pour commencer.";
+        if (filteredTasks.length === 0) { // Si aucune tâche ne correspond au filtre
+            emptyList.style.display = 'block'; // Affiche le message
+            // Message différent selon qu'il y a des tâches ou non
+            if (tasks.length > 0) { // Si des tâches existent mais ne correspondent pas au filtre
+                emptyList.textContent = "Aucune tâche ne correspond à ce filtre."; // Affiche le message
+            } else { // Si aucune tâche n'existe
+                emptyList.textContent = "Votre liste est vide. Ajoutez une tâche pour commencer."; // Affiche le message
             }
-        } else {
-            emptyList.style.display = 'none';
+        } else { // Si des tâches correspondent au filtre
+            emptyList.style.display = 'none'; // Cache le message
         }
     }
     
+    // Fonction pour sauvegarder les tâches dans le localStorage
     function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem('tasks', JSON.stringify(tasks)); // Convertit en JSON et sauvegarde
     }
+    
+    // Fonction pour vider le localStorage
     function clearLocalStorage() {
-        // Afficher la modale de confirmation
-        const confirmModal = document.getElementById('confirm-modal');
-        confirmModal.classList.remove('hidden');
+        // Affiche la modale de confirmation
+        const confirmModal = document.getElementById('confirm-modal'); // dans la variable "confirmModal", récupère la modale qui à l'ID 'confirm-modal'
+        confirmModal.classList.remove('hidden'); // Affiche la modale
         
-        // Gérer les boutons de la modale
-        document.getElementById('confirm-cancel').addEventListener('click', () => {
-            confirmModal.classList.add('hidden');
+        // Gestion du bouton Annuler
+        document.getElementById('confirm-cancel').addEventListener('click', () => { // Récupère dans le HTML le bouton avec l'ID 'confirm-cancel' lorqu'il est cliqué
+            confirmModal.classList.add('hidden'); // Cache la modale
         }, { once: true }); // Le listener ne s'exécutera qu'une fois
         
-        document.getElementById('confirm-delete').addEventListener('click', () => {
-            try {
+        // Gestion du bouton Supprimer
+        document.getElementById('confirm-delete').addEventListener('click', () => { // Récupère dans le HTML le bouton avec l'ID 'confirm-cancel' lorqu'il est cliqué
+            try { // Essaie 
                 // Vider les tâches
-                localStorage.clear();
-                tasks = [];
-                renderTasks();
-                updateEmptyState();
+                localStorage.clear(); // Vide le localStorage
+                tasks = []; // Réinitialise le tableau
+                renderTasks(); // Rafraîchit l'affichage
+                updateEmptyState(); // Met à jour l'état de la liste vide
                 
-                // Cacher la modale de confirmation
-                confirmModal.classList.add('hidden');
+                confirmModal.classList.add('hidden'); // Cache la modale de confirmation
                 
-                // Afficher la modale de succès
-                const successModal = document.getElementById('success-modal');
-                successModal.classList.remove('hidden');
+                // Affiche la modale de succès
+                const successModal = document.getElementById('success-modal'); // dans la variable "successModal" récupère la modale qui à l'ID 'success-modal'
+                successModal.classList.remove('hidden'); // Mais cache là après un certain temps
                 
-                // Cacher après 3 secondes
+                // Cache après 2 secondes
                 setTimeout(() => {
                     successModal.classList.add('hidden');
                 }, 2000);
                 
             } catch (error) {
-                // En cas d'erreur, afficher la modale d'erreur
+                // En cas d'erreur, affiche la modale d'erreur
                 confirmModal.classList.add('hidden');
                 
                 const errorModal = document.getElementById('error-modal');
@@ -264,11 +302,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     `Une erreur s'est produite : ${error.message}`;
                 errorModal.classList.remove('hidden');
                 
-                // Fermer la modale d'erreur quand on clique sur OK
+                // Ferme la modale d'erreur quand on clique sur OK
                 document.getElementById('error-ok').addEventListener('click', () => {
                     errorModal.classList.add('hidden');
-                }, { once: true });
+                }, { once: true }); // Le listener ne s'exécutera qu'une fois
             }
-        }, { once: true });
+        }, { once: true }); // Le listener ne s'exécutera qu'une fois
     }
 });
