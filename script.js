@@ -122,15 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
         taskItem.innerHTML = `
             <form class="task-edit-form flex w-full gap-2">
                 <input type="text" 
-                       class="edit-input flex-grow px-4 py-2 border-none text-base bg-[var(--color-background)] text-[var(--color-text)] focus:outline-none" 
+                       class="edit-input flex-grow px-3 py-1 sm:px-4 sm:py-2 border-none text-sm sm:text-base bg-[var(--color-background)] text-[var(--color-text)] focus:outline-none" 
                        value="${currentText}"
                        style="border-radius: var(--rounded-custom); box-shadow: var(--shadow-custom);"
                        onfocus="this.style.boxShadow='var(--shadow-focus)'" 
                        onblur="this.style.boxShadow='var(--shadow-custom)'">
-                <button type="submit" class="save-btn bg-[var(--color-primary)] text-black px-4 py-2 font-semibold" style="border-radius: var(--rounded-custom);">
+                <button type="submit" class="save-btn bg-[var(--color-primary)] text-black px-3 py-1 sm:px-4 sm:py-2 font-semibold text-sm sm:text-base" style="border-radius: var(--rounded-custom);">
                     <i class="fas fa-check"></i>
                 </button>
-                <button type="button" class="cancel-btn bg-[var(--color-lightText)] text-white px-4 py-2 font-semibold" style="border-radius: var(--rounded-custom);">
+                <button type="button" class="cancel-btn bg-[var(--color-lightText)] text-white px-3 py-1 sm:px-4 sm:py-2 font-semibold text-sm sm:text-base" style="border-radius: var(--rounded-custom);">
                     <i class="fas fa-times"></i>
                 </button>
             </form>
